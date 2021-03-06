@@ -1,34 +1,39 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect } from 'react'
+import { connect } from 'react-redux'
+import { Switch, Route, Redirect } from 'react-router-dom'
 import Homepage from './pages/homepage/homepage.comp'
 import ShopPage from './pages/shop/shop.comp.jsx'
+import CheckoutPage from './pages//checkout/checkout.comp.jsx'
 import Auth from './pages/auth/auth.comp'
 import Header from './components/layout/header/header.comp'
-import { Switch, Route } from 'react-router-dom'
+
 import { auth, createUserProfileDocument } from './firebase/firebase.utils'
+
+import { setLoggedUser } from './redux/user/user.actions'
 
 import './App.css'
 
-const App = () => {
-    const [loggeduser, setloggedUser] = useState(null)
-
+const App = (props) => {    
     let unsubscribeFromAuth = null
 
+    const { setLoggedUser, loggeduser } = props
+
     useEffect(() => {
+
         unsubscribeFromAuth = auth.onAuthStateChanged(async (userAuth) => {
             if (userAuth) {
                 const userRef = await createUserProfileDocument(userAuth)
 
                 userRef.onSnapshot((snapShot) => {
-                    setloggedUser({
+                    setLoggedUser({
                         id: snapShot.id,
                         ...snapShot.data(),
                     })
 
-                    console.log(loggeduser)
                 })
             } else {
                 // If the user sign out, set state to null
-                setloggedUser(userAuth)
+                setLoggedUser(userAuth)
             }
         })
 
@@ -39,14 +44,27 @@ const App = () => {
 
     return (
         <>
-            <Header loggeduser={loggeduser} />
+            <Header />
             <Switch>
                 <Route exact path='/' component={Homepage} />
                 <Route path='/shop' component={ShopPage} />
-                <Route path='/signin' component={Auth} />
+                <Route exact path='/checkout' component={CheckoutPage} />
+                <Route
+                    exact
+                    path='/signin'
+                    render={() => (loggeduser ? <Redirect to='/' /> : <Auth />)}
+                />
             </Switch>
         </>
     )
 }
 
-export default App
+const mapStateToProps = ({user}) => ({
+    loggeduser: user.loggeduser,
+})
+
+const mapDispatchToProps = (dispatch) => ({
+    setLoggedUser: (user) => dispatch(setLoggedUser(user)),
+})
+
+export default connect(mapStateToProps, mapDispatchToProps)(App)
