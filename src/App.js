@@ -1,25 +1,34 @@
 import React, { useEffect } from 'react'
+
 import { connect } from 'react-redux'
+import { createStructuredSelector } from 'reselect'
+
 import { Switch, Route, Redirect } from 'react-router-dom'
+
 import Homepage from './pages/homepage/homepage.comp'
 import ShopPage from './pages/shop/shop.comp.jsx'
 import CheckoutPage from './pages//checkout/checkout.comp.jsx'
 import Auth from './pages/auth/auth.comp'
 import Header from './components/layout/header/header.comp'
 
-import { auth, createUserProfileDocument } from './firebase/firebase.utils'
+import {
+    auth,
+    createUserProfileDocument,
+} from './firebase/firebase.utils'
 
 import { setLoggedUser } from './redux/user/user.actions'
+import { selectLoggedUser } from './redux/user/user.selectors'
+
+// import { selectCollectionsForPreview } from './redux/shop/shop.selectors'
 
 import './App.css'
 
-const App = (props) => {    
+const App = (props) => {
     let unsubscribeFromAuth = null
 
     const { setLoggedUser, loggeduser } = props
 
     useEffect(() => {
-
         unsubscribeFromAuth = auth.onAuthStateChanged(async (userAuth) => {
             if (userAuth) {
                 const userRef = await createUserProfileDocument(userAuth)
@@ -29,11 +38,17 @@ const App = (props) => {
                         id: snapShot.id,
                         ...snapShot.data(),
                     })
-
                 })
             } else {
                 // If the user sign out, set state to null
                 setLoggedUser(userAuth)
+
+                // -----> Add Collection & Documents to firestore from json <-----
+                
+                // addCollectionAndDocuments(
+                //     'collections',
+                //     collectionsArray.map(({ items, title }) => ({ title, items }))
+                // )
             }
         })
 
@@ -59,8 +74,9 @@ const App = (props) => {
     )
 }
 
-const mapStateToProps = ({user}) => ({
-    loggeduser: user.loggeduser,
+const mapStateToProps = createStructuredSelector({
+    loggeduser: selectLoggedUser,
+    // collectionsArray: selectCollectionsForPreview,
 })
 
 const mapDispatchToProps = (dispatch) => ({
