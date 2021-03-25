@@ -1,48 +1,43 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, lazy, Suspense } from 'react'
 import { Route } from 'react-router-dom'
 import { connect } from 'react-redux'
 
-import { firestore, convertCollectionsSnapshotToMap } from '../../firebase/firebase.utils.js'
-
+import { fetchCollections } from '../../helpers/shop.helper'
 import { updateCollections } from '../../redux/shop/shop.actions'
 
-import CollectionsOverview from '../../components/collections-overview/collections-overview.comp'
-import CollectionPage from '../collection/collection.comp'
-
+import WithSpinner from '../../components/spinner/with-spinner.comp'
 import Spinner from '../../components/spinner/spinner.comp'
 
-const CollectionsOverviewSpinner = Spinner(CollectionsOverview)
-const CollectionPageSpinner = Spinner(CollectionPage)
+const CollectionsOverview = lazy(() =>
+    import('../../components/collections-overview/collections-overview.comp')
+)
+const CollectionPage = lazy(() => import('../collection/collection.comp'))
+
+const CollectionsOverviewSpinner = WithSpinner(CollectionsOverview)
+const CollectionPageSpinner = WithSpinner(CollectionPage)
 
 const ShopPage = ({ match, updateCollections }) => {
     const [loading, setLoading] = useState(true)
 
-    let unsubscribeFromSnapshot = null
-
     useEffect(() => {
-        const collectionRef = firestore.collection('collections')
-
-        unsubscribeFromSnapshot = collectionRef.onSnapshot(async (snapshot) => {
-            const collectionsMap = convertCollectionsSnapshotToMap(snapshot)
-
-            updateCollections(collectionsMap)
-            setLoading(false)
-        })
-
-        return () => {}
+        fetchCollections(updateCollections, setLoading)
     }, [])
 
     return (
         <div className='shop-page'>
-            <Route
-                exact
-                path={`${match.path}`}
-                render={(props) => <CollectionsOverviewSpinner isLoading={loading} {...props} />}
-            />
-            <Route
-                path={`${match.path}/:collectionId`}
-                render={(props) => <CollectionPageSpinner isLoading={loading} {...props} />}
-            />
+            <Suspense fallback={<Spinner />}>
+                <Route
+                    exact
+                    path={`${match.path}`}
+                    render={(props) => (
+                        <CollectionsOverviewSpinner isLoading={loading} {...props} />
+                    )}
+                />
+                <Route
+                    path={`${match.path}/:collectionId`}
+                    render={(props) => <CollectionPageSpinner isLoading={loading} {...props} />}
+                />
+            </Suspense>
         </div>
     )
 }

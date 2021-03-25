@@ -1,27 +1,27 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, lazy, Suspense } from 'react'
 
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 
 import { Switch, Route, Redirect } from 'react-router-dom'
 
-import Homepage from './pages/homepage/homepage.comp'
-import ShopPage from './pages/shop/shop.comp.jsx'
-import CheckoutPage from './pages//checkout/checkout.comp.jsx'
-import Auth from './pages/auth/auth.comp'
-import Header from './components/layout/header/header.comp'
-
-import {
-    auth,
-    createUserProfileDocument,
-} from './firebase/firebase.utils'
+import { auth, createUserProfileDocument } from './firebase/firebase.utils'
 
 import { setLoggedUser } from './redux/user/user.actions'
 import { selectLoggedUser } from './redux/user/user.selectors'
 
+import './App.scss'
+import Header from './components/layout/header/header.comp'
+import Spinner from './components/spinner/spinner.comp'
+
+const Homepage = lazy(() => import('./pages/homepage/homepage.comp'))
+const ShopPage = lazy(() => import('./pages/shop/shop.comp.jsx'))
+const CheckoutPage = lazy(() => import('./pages/checkout/checkout.comp.jsx'))
+const Auth = lazy(() => import('./pages/auth/auth.comp'))
+
+
 // import { selectCollectionsForPreview } from './redux/shop/shop.selectors'
 
-import './App.css'
 
 const App = (props) => {
     let unsubscribeFromAuth = null
@@ -44,7 +44,7 @@ const App = (props) => {
                 setLoggedUser(userAuth)
 
                 // -----> Add Collection & Documents to firestore from json <-----
-                
+
                 // addCollectionAndDocuments(
                 //     'collections',
                 //     collectionsArray.map(({ items, title }) => ({ title, items }))
@@ -61,14 +61,16 @@ const App = (props) => {
         <>
             <Header />
             <Switch>
-                <Route exact path='/' component={Homepage} />
-                <Route path='/shop' component={ShopPage} />
-                <Route exact path='/checkout' component={CheckoutPage} />
-                <Route
-                    exact
-                    path='/signin'
-                    render={() => (loggeduser ? <Redirect to='/' /> : <Auth />)}
-                />
+                <Suspense fallback={<Spinner />}>
+                    <Route exact path='/' component={Homepage} />
+                    <Route path='/shop' component={ShopPage} />
+                    <Route exact path='/checkout' component={CheckoutPage} />
+                    <Route
+                        exact
+                        path='/signin'
+                        render={() => (loggeduser ? <Redirect to='/' /> : <Auth />)}
+                    />
+                </Suspense>
             </Switch>
         </>
     )

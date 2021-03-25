@@ -6,9 +6,9 @@ import CollectionCard from '../../components/collection-card/collection-card.com
 
 import './collection.styles.scss'
 
-const CollectionPage = ({ collection, whatever }) => {
+const CollectionPage = ({ collection }) => {
     const { title, items } = collection
-    whatever()
+ 
     return (
         <div className='collection-page'>
             <h2 className='title'>{title}</h2>
@@ -22,8 +22,7 @@ const CollectionPage = ({ collection, whatever }) => {
 }
 
 const mapStateToProps = (state, ownProps) => ({
-    collection: selectCollection(ownProps.match.params.collectionId)(state),
-    whatever: () => console.log('Im getting caaaaalled'),
+    collection: selectCollection(ownProps.match.params.collectionId)(state)
 })
 
 export default connect(mapStateToProps)(CollectionPage)
